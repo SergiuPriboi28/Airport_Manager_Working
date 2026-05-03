@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -41,11 +42,13 @@ public class FlightController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Optional<LocalDateTime> dateTo,
             @RequestParam Optional<Long> routeId,
             @RequestParam Optional<FlightStatus> status,
+            @RequestParam Optional<List<FlightStatus>> statuses,
             @RequestParam Optional<String> origin,
             @RequestParam Optional<String> destination,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> date
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> date,
+            @RequestParam Optional<String> code
     ) {
-        return flightService.list(pageable, dateFrom, dateTo, routeId, status, origin, destination, date);
+        return flightService.list(pageable, dateFrom, dateTo, routeId, status, statuses, origin, destination, date, code);
     }
 
     @GetMapping("/my")
@@ -59,7 +62,9 @@ public class FlightController {
             @RequestParam Optional<FlightStatus> status,
             @RequestParam Optional<String> origin,
             @RequestParam Optional<String> destination,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> date
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> date,
+            @RequestParam Optional<Long> originId,
+            @RequestParam Optional<Long> destinationId
     ) {
         return flightService.listForPassenger(userDetails.getUserId(), pageable, dateFrom, dateTo, routeId, status, origin, destination, date);
     }

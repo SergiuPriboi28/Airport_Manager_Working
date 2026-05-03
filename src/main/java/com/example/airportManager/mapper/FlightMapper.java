@@ -17,8 +17,10 @@ public interface FlightMapper {
     @Mapping(target = "arrivalScheduled", source = "arrivalTime")
     Flight toEntity(FlightCreateDTO dto);
 
-    @Mapping(target = "routeId", source = "route.id")
-    @Mapping(target = "departureTime", source = "departureScheduled")
-    @Mapping(target = "arrivalTime", source = "arrivalScheduled")
+    @Mapping(target = "routeId",              source = "route.id")
+    @Mapping(target = "departureTime",        source = "departureScheduled")
+    @Mapping(target = "arrivalTime",          source = "arrivalScheduled")
+    @Mapping(target = "originCity",           source = "route.originAirport.city")
+    @Mapping(target = "destinationCity",      source = "route.destAirport.city")
     FlightResponseDTO toResponse(Flight entity);
 }

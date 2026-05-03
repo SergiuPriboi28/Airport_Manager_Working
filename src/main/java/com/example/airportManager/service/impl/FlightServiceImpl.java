@@ -49,9 +49,11 @@ public class FlightServiceImpl implements FlightService {
             Optional<LocalDateTime> dateTo,
             Optional<Long> routeId,
             Optional<FlightStatus> status,
+            Optional<List<FlightStatus>> statuses,
             Optional<String> origin,
             Optional<String> destination,
-            Optional<LocalDate> date
+            Optional<LocalDate> date,
+            Optional<String> code
     ) {
         Specification<Flight> spec = Specification.where(null);
         if (dateFrom.isPresent() || dateTo.isPresent()) {

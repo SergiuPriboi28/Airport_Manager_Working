@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout:*)",
+      "Bash(python3 -c 'import bcrypt; result = bcrypt.checkpw\\(b'\\\\''password'\\\\'', b'\\\\''$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy'\\\\''\\); print\\('\\\\''Match:'\\\\'', result\\)')",
+      "Bash(node -e 'const bcrypt = require\\('\\\\''bcrypt'\\\\''\\); bcrypt.compare\\('\\\\''password'\\\\'', '\\\\''$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy'\\\\''\\).then\\(r => console.log\\('\\\\''Match:'\\\\'', r\\)\\)')",
+      "Bash(htpasswd -bnBC 10 \"\" password)",
+      "Bash(psql postgresql://postgres:postgres@localhost:5432/airportdb -c \"SELECT email, password_hash FROM app_user WHERE email='employee@airport.com';\")",
+      "Bash(psql postgresql://postgres:postgres@localhost:5432/airportdb -c \"SELECT email, status FROM app_user;\")",
+      "Bash(psql postgresql://postgres:postgres@localhost:5432/airportdb -c \"SELECT email, password_hash, length\\(password_hash\\) as hash_len FROM app_user;\")",
+      "Bash(psql postgresql://postgres:postgres@localhost:5432/airportdb -c 'UPDATE app_user SET password_hash = '\\\\''$2a$10$x9kPzcXZe.HdoJSZGvEQbukjXlmDyghQJM2HWz7hi6ppcHNJoxHe2'\\\\'' WHERE email IN \\('\\\\''admin@airport.com'\\\\'','\\\\''employee@airport.com'\\\\'','\\\\''passenger@airport.com'\\\\''\\) RETURNING email, length\\(password_hash\\) as hash_len;')",
+      "Bash(grep \"password_hash\\\\|2a\\\\$10\" /Users/marinelbosna/IdeaProjects/aiport-manager/Airport_Management-main/Airport_Management-main/src/main/resources/db/test-data.sql)"
+    ]
+  }
+}

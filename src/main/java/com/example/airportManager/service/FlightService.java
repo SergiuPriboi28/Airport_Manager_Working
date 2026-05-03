@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -19,9 +20,11 @@ public interface FlightService {
             Optional<LocalDateTime> dateTo,
             Optional<Long> routeId,
             Optional<FlightStatus> status,
+            Optional<List<FlightStatus>> statuses,
             Optional<String> origin,
             Optional<String> destination,
-            Optional<LocalDate> date
+            Optional<LocalDate> date,
+            Optional<String> code
     );
     Page<FlightResponseDTO> listForPassenger(
             UUID passengerId,

@@ -10,5 +10,7 @@ public record FlightResponseDTO(
         Long routeId,
         LocalDateTime departureTime,
         LocalDateTime arrivalTime,
-        FlightStatus status
+        FlightStatus status,
+        String originCity,
+        String destinationCity
 ) {}
