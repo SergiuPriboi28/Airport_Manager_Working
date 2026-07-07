@@ -98,7 +98,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    GoogleIdTokenVerifier googleIdTokenVerifier(@Value("${google.client-id}") String clientId) {
+    GoogleIdTokenVerifier googleIdTokenVerifier(@Value("${google.client.id}") String clientId) {
         return new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), GsonFactory.getDefaultInstance())
                 .setAudience(List.of(clientId))
                 .build();

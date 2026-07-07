@@ -1,6 +1,7 @@
 package com.example.airportManager.web.controller;
 
 import com.example.airportManager.dto.auth.AuthResponseDTO;
+import com.example.airportManager.dto.auth.GoogleLoginRequestDTO;
 import com.example.airportManager.dto.auth.LoginRequestDTO;
 import com.example.airportManager.dto.auth.RegisterRequestDTO;
 import com.example.airportManager.service.AuthService;
@@ -26,6 +27,12 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponseDTO> login(@Valid @RequestBody LoginRequestDTO request) {
         AuthResponseDTO response = authService.login(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<AuthResponseDTO> google(@Valid @RequestBody GoogleLoginRequestDTO request) {
+        AuthResponseDTO response = authService.loginWithGoogle(request);
         return ResponseEntity.ok(response);
     }
 }

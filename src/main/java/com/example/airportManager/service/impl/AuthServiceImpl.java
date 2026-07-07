@@ -14,7 +14,12 @@ import com.example.airportManager.security.CustomUserDetails;
 import com.example.airportManager.security.JwtUtil;
 import com.example.airportManager.service.AuthService;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
+import io.micrometer.common.util.StringUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -22,13 +27,21 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static com.fasterxml.jackson.databind.type.LogicalType.Collection;
 
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
+    @Value("${google.client.id}")
+    private String googleClientID;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PassengerProfileRepository passengerProfileRepository;
@@ -97,7 +110,53 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public AuthResponseDTO loginWithGoogle(GoogleLoginRequestDTO request) {
 
+        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
+                new NetHttpTransport(), GsonFactory.getDefaultInstance())
+                .setAudience(Collections.singletonList(googleClientID)).build();
 
-        return new AuthResponseDTO(user.getId(), user.getEmail(), roleNames, token);
+        GoogleIdToken idToken;
+
+        try{
+            idToken = verifier.verify(request.idToken());
+        } catch (Exception e) {
+            throw new RuntimeException("Google verification token has failed!");
+        }
+        if (StringUtils.isEmpty(String.valueOf(idToken)))
+            throw new RuntimeException("Google token is empty!");
+
+        GoogleIdToken.Payload payload = idToken.getPayload();
+        String googleID = payload.getSubject();
+        String email = payload.getEmail();
+        String firstName = payload.get("first_name").toString();
+        String lastName = payload.get("last_name").toString();
+        User userGoogle = resolveUser(googleID,email,firstName,lastName);
+        CustomUserDetails customUserDetails = new CustomUserDetails(userGoogle);
+        String token = jwtUtil.generateToken(customUserDetails);
+
+        Set<String> roles = userGoogle.getRoles().stream()
+                .map(role -> role.getName().name())
+                .collect(Collectors.toSet());
+
+
+        return new AuthResponseDTO(userGoogle.getId(), userGoogle.getEmail(), roles, token);
+    }
+
+    private User resolveUser(String googleId, String email, String firstName, String lastName){
+        Optional<User> byGoogleId = userRepository.findByGoogleId(googleId);
+        if (byGoogleId.isPresent()) return byGoogleId.get();
+
+        Optional<User> byEmail = userRepository.findByEmail(email);
+        if (byEmail.isPresent()){
+            User existing = byEmail.get();
+            existing.setGoogleId(googleId);
+            return userRepository.save(existing);
+        }
+        User user = User.builder()
+                .email(email)
+                .passwordHash(null)
+                .googleId(googleId)
+                .role(RoleName.PASSENGER).build();
+
+        return userRepository.save(user);
     }
 }

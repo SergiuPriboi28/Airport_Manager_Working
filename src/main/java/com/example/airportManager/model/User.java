@@ -16,6 +16,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Getter
 @Setter
+@Builder
 @ToString(exclude = {"roles", "employeeProfile", "passengerProfile"})
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class User {
@@ -30,7 +31,7 @@ public class User {
     @Column(nullable = false)
     private String phone;
 
-    @Column
+    @Column(nullable = true)
     private String passwordHash;
 
     @Enumerated(EnumType.STRING)
@@ -43,12 +44,11 @@ public class User {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private AuthProvider provider = AuthProvider.LOCAL;
+    @Column(nullable = true)
+    private String googleId;
 
-    @Column(nullable = false)
-    private String providerId;
+    @Column(nullable = true)
+    private RoleName role;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
