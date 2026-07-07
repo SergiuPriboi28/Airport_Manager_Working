@@ -1,9 +1,11 @@
 package com.example.airportManager.service.impl;
 
 import com.example.airportManager.dto.auth.AuthResponseDTO;
+import com.example.airportManager.dto.auth.GoogleLoginRequestDTO;
 import com.example.airportManager.dto.auth.LoginRequestDTO;
 import com.example.airportManager.dto.auth.RegisterRequestDTO;
 import com.example.airportManager.exception.ConflictException;
+import com.example.airportManager.exception.InvalidOAuthTokenException;
 import com.example.airportManager.model.*;
 import com.example.airportManager.repository.PassengerProfileRepository;
 import com.example.airportManager.repository.RoleRepository;
@@ -11,6 +13,7 @@ import com.example.airportManager.repository.UserRepository;
 import com.example.airportManager.security.CustomUserDetails;
 import com.example.airportManager.security.JwtUtil;
 import com.example.airportManager.service.AuthService;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -88,5 +91,13 @@ public class AuthServiceImpl implements AuthService {
                 .collect(Collectors.toSet());
 
         return new AuthResponseDTO(user.getId(), user.getEmail(), roles, token);
+    }
+
+    @Override
+    @Transactional
+    public AuthResponseDTO loginWithGoogle(GoogleLoginRequestDTO request) {
+
+
+        return new AuthResponseDTO(user.getId(), user.getEmail(), roleNames, token);
     }
 }

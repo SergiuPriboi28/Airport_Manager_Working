@@ -1,6 +1,7 @@
 package com.example.airportManager.web.error;
 
 import com.example.airportManager.exception.ConflictException;
+import com.example.airportManager.exception.InvalidOAuthTokenException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -13,6 +14,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -110,5 +112,21 @@ public class GlobalExceptionHandler {
                 List.of(ex.getMessage())
         );
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+    }
+
+    @ExceptionHandler(InvalidOAuthTokenException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidOAuthToken(
+            InvalidOAuthTokenException ex,
+            HttpServletRequest req
+    ) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                Instant.now(),
+                req.getRequestURI(),
+                HttpStatus.UNAUTHORIZED.value(),
+                "INVALID_OAUTH_TOKEN",
+                ex.getMessage(),
+                List.of()
+        );
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     }
 }

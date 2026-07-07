@@ -30,7 +30,7 @@ public class User {
     @Column(nullable = false)
     private String phone;
 
-    @Column(nullable = false)
+    @Column
     private String passwordHash;
 
     @Enumerated(EnumType.STRING)
@@ -42,6 +42,13 @@ public class User {
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AuthProvider provider = AuthProvider.LOCAL;
+
+    @Column(nullable = false)
+    private String providerId;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
