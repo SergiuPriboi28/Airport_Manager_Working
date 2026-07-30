@@ -127,8 +127,8 @@ public class AuthServiceImpl implements AuthService {
         GoogleIdToken.Payload payload = idToken.getPayload();
         String googleID = payload.getSubject();
         String email = payload.getEmail();
-        String firstName = payload.get("first_name").toString();
-        String lastName = payload.get("last_name").toString();
+        String firstName = payload.get("given_name").toString();
+        String lastName = payload.get("family_name").toString();
         User userGoogle = resolveUser(googleID,email,firstName,lastName);
         CustomUserDetails customUserDetails = new CustomUserDetails(userGoogle);
         String token = jwtUtil.generateToken(customUserDetails);
@@ -151,11 +151,15 @@ public class AuthServiceImpl implements AuthService {
             existing.setGoogleId(googleId);
             return userRepository.save(existing);
         }
+
+        Role defaultRole = roleRepository.findByName(RoleName.PASSENGER).orElseThrow(() -> new RuntimeException("Default role not found"));
+
         User user = User.builder()
                 .email(email)
                 .passwordHash(null)
                 .googleId(googleId)
-                .role(RoleName.PASSENGER).build();
+                .role(RoleName.PASSENGER)
+                .roles(Set.of(defaultRole)).build();
 
         return userRepository.save(user);
     }

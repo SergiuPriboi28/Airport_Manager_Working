@@ -28,14 +28,14 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
+    @Column
     private String phone;
 
     @Column(nullable = true)
     private String passwordHash;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column
     private UserStatus status;
 
     @Column(nullable = false, updatable = false)

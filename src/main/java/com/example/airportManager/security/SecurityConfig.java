@@ -55,13 +55,21 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/aircraft/**").hasAnyRole("EMPLOYEE", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/aircraft/**").hasAnyRole("EMPLOYEE", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/aircraft/**").hasAnyRole("EMPLOYEE", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/airport/**").hasAnyRole("PASSENGER", "EMPLOYEE", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/airport/**").hasAnyRole("EMPLOYEE", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/airport/**").hasAnyRole("EMPLOYEE", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/aircraft/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
+                .headers(headers -> headers
+                        .frameOptions(frame -> frame.sameOrigin())
+                        .addHeaderWriter((request, response) ->
+                                response.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups")
+                        )
+                );
 
         return http.build();
     }
