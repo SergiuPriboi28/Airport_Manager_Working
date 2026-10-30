@@ -18,6 +18,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -44,6 +45,11 @@ public class RouteServiceImpl implements RouteService {
     @Override
     @Transactional
     public RouteResponseDTO create(RouteCreateDTO dto) {
+
+        if (Objects.equals(dto.destAirportId(), dto.originAirportId())){
+            throw new ConflictException("You cannot create a route with the same origin and destination airport");
+        }
+
         if (routeRepository.existsByOriginAirportIdAndDestAirportId(dto.originAirportId(), dto.destAirportId())) {
             throw new ConflictException("Route already exists for this origin-destination pair");
         }
@@ -67,6 +73,7 @@ public class RouteServiceImpl implements RouteService {
         if (!routeRepository.existsById(id)) {
             throw new EntityNotFoundException("Route not found with id: " + id);
         }
+        // if - route is linked to a flight
         routeRepository.deleteById(id);
     }
 }
