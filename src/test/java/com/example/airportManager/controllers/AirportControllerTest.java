@@ -44,9 +44,6 @@ public class AirportControllerTest {
             """;
 
 
-    //GET APIs -----------------------------------------------------
-
-
     @Test
     @WithMockUser(roles = "PASSENGER")
     void passengerCanListAirports() throws Exception {

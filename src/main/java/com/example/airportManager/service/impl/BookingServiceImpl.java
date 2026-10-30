@@ -37,6 +37,10 @@ public class BookingServiceImpl implements BookingService {
         Flight flight = flightRepository.findById(dto.flightId())
                 .orElseThrow(() -> new EntityNotFoundException("Flight not found with id: " + dto.flightId()));
 
+        if (flight.getAircraft() == null){
+            throw new IllegalStateException("No aircraft is assigned to this flight");
+        }
+
         int capacity = flight.getAircraft() != null ? flight.getAircraft().getCapacity() : 0;
         long confirmed = bookingRepository.countConfirmedByFlightId(flight.getId());
         if (confirmed >= capacity) {
@@ -77,11 +81,15 @@ public class BookingServiceImpl implements BookingService {
         if (!booking.getPassengerProfile().getUserId().equals(userId)) {
             throw new AccessDeniedException("You do not own this booking");
         }
+        if (booking.getStatus().equals(BookingStatus.CANCELLED)){
+            throw new IllegalStateException("Booking already cancelled!");
+        }
+
         booking.setStatus(BookingStatus.CANCELLED);
         return bookingMapper.toResponse(bookingRepository.save(booking));
     }
 
-    private String generatePNR() {
+    public String generatePNR() {
         return "PNR" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 }

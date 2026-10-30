@@ -3,6 +3,7 @@ package com.example.airportManager.service.impl;
 import com.example.airportManager.dto.airport.AirportCreateDTO;
 import com.example.airportManager.dto.airport.AirportResponseDTO;
 import com.example.airportManager.dto.airport.AirportUpdateDTO;
+import com.example.airportManager.exception.ConflictException;
 import com.example.airportManager.mapper.AirportMapper;
 import com.example.airportManager.model.Airport;
 import com.example.airportManager.repository.AirportRepository;
@@ -36,6 +37,9 @@ public class AirportServiceImpl implements AirportService {
     @Override
     @Transactional
     public AirportResponseDTO create(AirportCreateDTO dto) {
+        if (airportRepository.findByIata(dto.iata()).isPresent()) {
+            throw new ConflictException("Airport with IATA " + dto.iata() + " already exists");
+        }
         Airport airport = airportMapper.toEntity(dto);
         Airport saved = airportRepository.save(airport);
         return airportMapper.toResponse(saved);
