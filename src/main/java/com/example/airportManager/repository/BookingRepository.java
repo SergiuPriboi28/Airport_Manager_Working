@@ -1,6 +1,7 @@
 package com.example.airportManager.repository;
 
 import com.example.airportManager.model.Booking;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,6 +15,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("SELECT b FROM Booking b WHERE b.passengerProfile.userId = :passengerId")
     List<Booking> findByPassengerProfileUserId(@Param("passengerId") UUID passengerId);
 
+    @EntityGraph(attributePaths = {"passengerProfile", "passengerProfile.user"})
     @Query("SELECT b FROM Booking b WHERE b.flight.id = :flightId")
     List<Booking> findByFlightId(@Param("flightId") Long flightId);
 
