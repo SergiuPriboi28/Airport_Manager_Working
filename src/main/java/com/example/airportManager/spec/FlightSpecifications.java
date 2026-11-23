@@ -6,6 +6,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public final class FlightSpecifications {
     private FlightSpecifications() {}
@@ -51,8 +52,23 @@ public final class FlightSpecifications {
     }
 
     public static Specification<Flight> hasCode(String code) {
-        return (root, query, cb) -> code == null ? null :
-                cb.like(cb.lower(root.get("flight").get("code")),
-                        "%" + code.toLowerCase() +"%");
+        return (root, query, cb) -> (code == null || code.isBlank()) ? null :
+                cb.like(cb.lower(root.get("code")),
+                        "%" + code.toLowerCase() + "%");
+    }
+
+    public static Specification<Flight> hasStatusIn(List<FlightStatus> statuses) {
+        return (root, query, cb) -> (statuses == null || statuses.isEmpty()) ? null :
+                root.get("status").in(statuses);
+    }
+
+    public static Specification<Flight> hasOriginAirportId(Long originId) {
+        return (root, query, cb) -> originId == null ? null :
+                cb.equal(root.get("route").get("originAirport").get("id"), originId);
+    }
+
+    public static Specification<Flight> hasDestAirportId(Long destinationId) {
+        return (root, query, cb) -> destinationId == null ? null :
+                cb.equal(root.get("route").get("destAirport").get("id"), destinationId);
     }
 }
