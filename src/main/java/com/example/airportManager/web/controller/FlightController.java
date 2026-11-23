@@ -2,8 +2,8 @@ package com.example.airportManager.web.controller;
 
 import com.example.airportManager.dto.flight.FlightCreateDTO;
 import com.example.airportManager.dto.flight.FlightDetailResponseDTO;
+import com.example.airportManager.dto.flight.FlightFilterDTO;
 import com.example.airportManager.dto.flight.FlightResponseDTO;
-import com.example.airportManager.model.FlightStatus;
 import com.example.airportManager.model.RoleName;
 import com.example.airportManager.security.CustomUserDetails;
 import com.example.airportManager.service.FlightService;
@@ -14,18 +14,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/flights")
@@ -37,36 +31,20 @@ public class FlightController {
     @GetMapping
     @PreAuthorize("hasAnyRole('PASSENGER', 'EMPLOYEE', 'ADMIN')")
     public Page<FlightResponseDTO> list(
-            @ParameterObject @PageableDefault(sort = "departureScheduled", direction = Sort.Direction.ASC) Pageable pageable,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Optional<LocalDateTime> dateFrom,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Optional<LocalDateTime> dateTo,
-            @RequestParam Optional<Long> routeId,
-            @RequestParam Optional<FlightStatus> status,
-            @RequestParam Optional<List<FlightStatus>> statuses,
-            @RequestParam Optional<String> origin,
-            @RequestParam Optional<String> destination,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> date,
-            @RequestParam Optional<String> code
+            @ParameterObject @ModelAttribute FlightFilterDTO filter,
+            @ParameterObject @PageableDefault(sort = "departureScheduled", direction = Sort.Direction.ASC) Pageable pageable
     ) {
-        return flightService.list(pageable, dateFrom, dateTo, routeId, status, statuses, origin, destination, date, code);
+        return flightService.list(filter, pageable);
     }
 
     @GetMapping("/my")
     @PreAuthorize("hasRole('PASSENGER')")
     public Page<FlightResponseDTO> listMyFlights(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @ParameterObject @PageableDefault(sort = "departureScheduled", direction = Sort.Direction.ASC) Pageable pageable,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Optional<LocalDateTime> dateFrom,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Optional<LocalDateTime> dateTo,
-            @RequestParam Optional<Long> routeId,
-            @RequestParam Optional<FlightStatus> status,
-            @RequestParam Optional<String> origin,
-            @RequestParam Optional<String> destination,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> date,
-            @RequestParam Optional<Long> originId,
-            @RequestParam Optional<Long> destinationId
+            @ParameterObject @ModelAttribute FlightFilterDTO filter,
+            @ParameterObject @PageableDefault(sort = "departureScheduled", direction = Sort.Direction.ASC) Pageable pageable
     ) {
-        return flightService.listForPassenger(userDetails.getUserId(), pageable, dateFrom, dateTo, routeId, status, origin, destination, date);
+        return flightService.listForPassenger(userDetails.getUserId(), filter, pageable);
     }
 
     @GetMapping("/{id}")
