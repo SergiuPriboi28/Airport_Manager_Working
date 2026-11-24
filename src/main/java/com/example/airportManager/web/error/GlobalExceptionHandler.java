@@ -9,11 +9,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 
 import java.time.Instant;
@@ -95,6 +98,55 @@ public class GlobalExceptionHandler {
                 List.of()
         );
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(
+            AccessDeniedException ex,
+            HttpServletRequest req
+    ) {
+        log.warn("Access denied on {}: {}", req.getRequestURI(), ex.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(
+                Instant.now(),
+                req.getRequestURI(),
+                HttpStatus.FORBIDDEN.value(),
+                "ACCESS_DENIED",
+                "You do not have permission to perform this action",
+                List.of()
+        );
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleUnreadable(
+            HttpMessageNotReadableException ex,
+            HttpServletRequest req
+    ) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                Instant.now(),
+                req.getRequestURI(),
+                HttpStatus.BAD_REQUEST.value(),
+                "MALFORMED_REQUEST",
+                "Request body is malformed or missing",
+                List.of()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(
+            MethodArgumentTypeMismatchException ex,
+            HttpServletRequest req
+    ) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                Instant.now(),
+                req.getRequestURI(),
+                HttpStatus.BAD_REQUEST.value(),
+                "TYPE_MISMATCH",
+                "Parameter '" + ex.getName() + "' has an invalid value",
+                List.of()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
     @ExceptionHandler(Exception.class)
