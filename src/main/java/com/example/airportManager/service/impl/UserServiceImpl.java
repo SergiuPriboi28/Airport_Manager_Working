@@ -7,6 +7,7 @@ import com.example.airportManager.repository.*;
 import com.example.airportManager.service.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,6 +19,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -45,7 +47,9 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserResponseDTO create(UserCreateDTO dto) {
+        log.info("Admin creating user: email={}, roles={}", dto.email(), dto.roles());
         if (userRepository.existsByEmail(dto.email())) {
+            log.warn("User creation rejected: email={} already registered", dto.email());
             throw new ConflictException("Email already registered: " + dto.email());
         }
 
@@ -86,16 +90,19 @@ public class UserServiceImpl implements UserService {
             passengerProfileRepository.save(passengerProfile);
         }
 
+        log.info("User created: userId={}, email={}", savedUser.getId(), savedUser.getEmail());
         return toResponseDTO(userRepository.findById(savedUser.getId()).orElse(savedUser));
     }
 
     @Override
     @Transactional
     public UserResponseDTO update(UUID id, UserUpdateDTO dto) {
+        log.info("Admin updating user: userId={}", id);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
 
         if (!user.getEmail().equals(dto.email()) && userRepository.existsByEmail(dto.email())) {
+            log.warn("User update rejected: userId={}, email={} already registered", id, dto.email());
             throw new ConflictException("Email already registered: " + dto.email());
         }
 
@@ -103,6 +110,7 @@ public class UserServiceImpl implements UserService {
         user.setPhone(dto.phone());
 
         if (dto.password() != null && !dto.password().isBlank()) {
+            log.info("Password reset by admin for userId={}", id);
             user.setPasswordHash(passwordEncoder.encode(dto.password()));
         }
 
@@ -153,16 +161,19 @@ public class UserServiceImpl implements UserService {
             }
         }
 
+        log.info("User updated: userId={}", savedUser.getId());
         return toResponseDTO(userRepository.findById(savedUser.getId()).orElse(savedUser));
     }
 
     @Override
     @Transactional
     public void delete(UUID id) {
+        log.info("Admin deleting user: userId={}", id);
         if (!userRepository.existsById(id)) {
             throw new EntityNotFoundException("User not found with id: " + id);
         }
         userRepository.deleteById(id);
+        log.info("User deleted: userId={}", id);
     }
 
     private UserResponseDTO toResponseDTO(User user) {

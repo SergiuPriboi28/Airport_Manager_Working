@@ -9,11 +9,13 @@ import com.example.airportManager.repository.AircraftRepository;
 import com.example.airportManager.service.AircraftService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AircraftServiceImpl implements AircraftService {
@@ -38,22 +40,28 @@ public class AircraftServiceImpl implements AircraftService {
     @Override
     @Transactional
     public AircraftResponseDTO create(AircraftCreateDTO dto) {
+        log.info("Creating aircraft: tailNumber={}", dto.tailNumber());
         if (aircraftRepository.findByTailNumber(dto.tailNumber()).isPresent()) {
+            log.warn("Aircraft creation rejected: tailNumber={} already exists", dto.tailNumber());
             throw new ConflictException("Aircraft with tail number " + dto.tailNumber() + " already exists");
         }
         Aircraft aircraft = aircraftMapper.toEntity(dto);
-        return aircraftMapper.toResponse(aircraftRepository.save(aircraft));
+        Aircraft saved = aircraftRepository.save(aircraft);
+        log.info("Aircraft created: aircraftId={}, tailNumber={}", saved.getId(), saved.getTailNumber());
+        return aircraftMapper.toResponse(saved);
     }
 
     @Override
     @Transactional
     public AircraftResponseDTO update(Long id, AircraftCreateDTO dto) {
+        log.info("Updating aircraft: aircraftId={}", id);
         Aircraft aircraft = aircraftRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Aircraft not found with id: " + id));
 
         aircraftRepository.findByTailNumber(dto.tailNumber())
                 .filter(existing -> !existing.getId().equals(id))
                 .ifPresent(existing -> {
+                    log.warn("Aircraft update rejected: aircraftId={}, tailNumber={} already exists", id, dto.tailNumber());
                     throw new ConflictException("Aircraft with tail number " + dto.tailNumber() + " already exists");
                 });
 
@@ -63,15 +71,19 @@ public class AircraftServiceImpl implements AircraftService {
         aircraft.setSeatMapRef(dto.seatMapRef());
         aircraft.setStatus(dto.status());
 
-        return aircraftMapper.toResponse(aircraftRepository.save(aircraft));
+        Aircraft updated = aircraftRepository.save(aircraft);
+        log.info("Aircraft updated: aircraftId={}, tailNumber={}", updated.getId(), updated.getTailNumber());
+        return aircraftMapper.toResponse(updated);
     }
 
     @Override
     @Transactional
     public void delete(Long id) {
+        log.info("Deleting aircraft: aircraftId={}", id);
         if (!aircraftRepository.existsById(id)) {
             throw new EntityNotFoundException("Aircraft not found with id: " + id);
         }
         aircraftRepository.deleteById(id);
+        log.info("Aircraft deleted: aircraftId={}", id);
     }
 }

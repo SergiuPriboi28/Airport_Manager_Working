@@ -19,10 +19,12 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import io.micrometer.common.util.StringUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +38,7 @@ import java.util.stream.Collectors;
 
 import static com.fasterxml.jackson.databind.type.LogicalType.Collection;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -52,7 +55,9 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponseDTO register(RegisterRequestDTO request) {
+        log.info("Registration attempt: email={}", request.email());
         if (userRepository.existsByEmail(request.email())) {
+            log.warn("Registration failed: email={} already registered", request.email());
             throw new ConflictException("Email already registered: " + request.email());
         }
 
@@ -85,15 +90,22 @@ public class AuthServiceImpl implements AuthService {
                 .map(role -> role.getName().name())
                 .collect(Collectors.toSet());
 
+        log.info("User registered: userId={}, email={}", savedUser.getId(), savedUser.getEmail());
         return new AuthResponseDTO(savedUser.getId(), savedUser.getEmail(), roles, token);
     }
 
     @Override
     @Transactional(readOnly = true)
     public AuthResponseDTO login(LoginRequestDTO request) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.password())
-        );
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.email(), request.password())
+            );
+        } catch (AuthenticationException ex) {
+            log.warn("Login failed: email={}, reason={}", request.email(), ex.getClass().getSimpleName());
+            throw ex;
+        }
 
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         User user = userDetails.getUser();
@@ -103,6 +115,7 @@ public class AuthServiceImpl implements AuthService {
                 .map(role -> role.getName().name())
                 .collect(Collectors.toSet());
 
+        log.info("Login succeeded: userId={}, email={}", user.getId(), user.getEmail());
         return new AuthResponseDTO(user.getId(), user.getEmail(), roles, token);
     }
 
@@ -119,10 +132,13 @@ public class AuthServiceImpl implements AuthService {
         try{
             idToken = verifier.verify(request.idToken());
         } catch (Exception e) {
+            log.warn("Google login failed: token verification error, reason={}", e.getClass().getSimpleName());
             throw new RuntimeException("Google verification token has failed!");
         }
-        if (StringUtils.isEmpty(String.valueOf(idToken)))
+        if (StringUtils.isEmpty(String.valueOf(idToken))) {
+            log.warn("Google login failed: empty token");
             throw new RuntimeException("Google token is empty!");
+        }
 
         GoogleIdToken.Payload payload = idToken.getPayload();
         String googleID = payload.getSubject();
@@ -137,7 +153,7 @@ public class AuthServiceImpl implements AuthService {
                 .map(role -> role.getName().name())
                 .collect(Collectors.toSet());
 
-
+        log.info("Google login succeeded: userId={}, email={}", userGoogle.getId(), userGoogle.getEmail());
         return new AuthResponseDTO(userGoogle.getId(), userGoogle.getEmail(), roles, token);
     }
 
