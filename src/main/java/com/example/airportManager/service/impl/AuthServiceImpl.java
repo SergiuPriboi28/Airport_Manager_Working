@@ -17,7 +17,6 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
-import io.micrometer.common.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -33,8 +32,6 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static com.fasterxml.jackson.databind.type.LogicalType.Collection;
 
 @Service
 @RequiredArgsConstructor
@@ -116,13 +113,13 @@ public class AuthServiceImpl implements AuthService {
 
         GoogleIdToken idToken;
 
-        try{
+        try {
             idToken = verifier.verify(request.idToken());
-        } catch (Exception e) {
-            throw new RuntimeException("Google verification token has failed!");
+        } catch (GeneralSecurityException | IOException e) {
+            throw new InvalidOAuthTokenException("Could not verify Google ID token", e);
         }
-        if (StringUtils.isEmpty(String.valueOf(idToken)))
-            throw new RuntimeException("Google token is empty!");
+        if (idToken == null)
+            throw new InvalidOAuthTokenException("Google ID token is invalid or expired");
 
         GoogleIdToken.Payload payload = idToken.getPayload();
         String googleID = payload.getSubject();
