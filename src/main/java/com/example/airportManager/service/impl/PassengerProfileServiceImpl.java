@@ -9,11 +9,13 @@ import com.example.airportManager.repository.UserRepository;
 import com.example.airportManager.service.PassengerProfileService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PassengerProfileServiceImpl implements PassengerProfileService {
@@ -36,6 +38,7 @@ public class PassengerProfileServiceImpl implements PassengerProfileService {
     @Override
     @Transactional
     public PassengerProfileResponseDTO updateMyProfile(UUID userId, PassengerProfileUpdateDTO dto) {
+        log.info("Updating passenger profile: userId={}", userId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
 
@@ -49,6 +52,7 @@ public class PassengerProfileServiceImpl implements PassengerProfileService {
         profile.setEmergencyContact(dto.emergencyContact());
 
         PassengerProfile savedProfile = passengerProfileRepository.save(profile);
+        log.info("Passenger profile updated: userId={}", userId);
         return toResponseDTO(user, savedProfile);
     }
 

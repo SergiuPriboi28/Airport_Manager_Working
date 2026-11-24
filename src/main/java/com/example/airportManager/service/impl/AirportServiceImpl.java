@@ -9,12 +9,14 @@ import com.example.airportManager.repository.AirportRepository;
 import com.example.airportManager.service.AirportService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 public class AirportServiceImpl implements AirportService {
     private final AirportRepository airportRepository;
@@ -36,27 +38,33 @@ public class AirportServiceImpl implements AirportService {
     @Override
     @Transactional
     public AirportResponseDTO create(AirportCreateDTO dto) {
+        log.info("Creating airport: iata={}", dto.iata());
         Airport airport = airportMapper.toEntity(dto);
         Airport saved = airportRepository.save(airport);
+        log.info("Airport created: airportId={}, iata={}", saved.getId(), saved.getIata());
         return airportMapper.toResponse(saved);
     }
 
     @Override
     @Transactional
     public AirportResponseDTO update(Long id, AirportUpdateDTO dto) {
+        log.info("Updating airport: airportId={}", id);
         Airport airport = airportRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Airport not found with id: " + id));
         airportMapper.update(airport, dto);
         Airport updated = airportRepository.save(airport);
+        log.info("Airport updated: airportId={}, iata={}", updated.getId(), updated.getIata());
         return airportMapper.toResponse(updated);
     }
 
     @Override
     @Transactional
     public void delete(Long id) {
+        log.info("Deleting airport: airportId={}", id);
         if (!airportRepository.existsById(id)) {
             throw new EntityNotFoundException("Airport not found with id: " + id);
         }
         airportRepository.deleteById(id);
+        log.info("Airport deleted: airportId={}", id);
     }
 }

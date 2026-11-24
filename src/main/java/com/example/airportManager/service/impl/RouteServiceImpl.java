@@ -12,6 +12,7 @@ import com.example.airportManager.service.RouteService;
 import com.example.airportManager.spec.RouteSpecifications;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RouteServiceImpl implements RouteService {
@@ -44,7 +46,10 @@ public class RouteServiceImpl implements RouteService {
     @Override
     @Transactional
     public RouteResponseDTO create(RouteCreateDTO dto) {
+        log.info("Creating route: originAirportId={}, destAirportId={}", dto.originAirportId(), dto.destAirportId());
         if (routeRepository.existsByOriginAirportIdAndDestAirportId(dto.originAirportId(), dto.destAirportId())) {
+            log.warn("Route creation rejected: route already exists for originAirportId={}, destAirportId={}",
+                    dto.originAirportId(), dto.destAirportId());
             throw new ConflictException("Route already exists for this origin-destination pair");
         }
 
@@ -58,15 +63,18 @@ public class RouteServiceImpl implements RouteService {
         route.setDestAirport(destAirport);
 
         Route saved = routeRepository.save(route);
+        log.info("Route created: routeId={}", saved.getId());
         return routeMapper.toResponse(saved);
     }
 
     @Override
     @Transactional
     public void delete(Long id) {
+        log.info("Deleting route: routeId={}", id);
         if (!routeRepository.existsById(id)) {
             throw new EntityNotFoundException("Route not found with id: " + id);
         }
         routeRepository.deleteById(id);
+        log.info("Route deleted: routeId={}", id);
     }
 }

@@ -13,6 +13,7 @@ import com.example.airportManager.repository.PassengerProfileRepository;
 import com.example.airportManager.service.BookingService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {
@@ -32,6 +34,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponseDTO create(BookingCreateDTO dto, UUID userId) {
+        log.info("Creating booking: userId={}, flightId={}", userId, dto.flightId());
         PassengerProfile passengerProfile = passengerProfileRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Passenger profile not found for user: " + userId));
         Flight flight = flightRepository.findById(dto.flightId())
@@ -40,6 +43,7 @@ public class BookingServiceImpl implements BookingService {
         int capacity = flight.getAircraft() != null ? flight.getAircraft().getCapacity() : 0;
         long confirmed = bookingRepository.countConfirmedByFlightId(flight.getId());
         if (confirmed >= capacity) {
+            log.warn("Booking rejected: flightId={} is fully booked, userId={}", flight.getId(), userId);
             throw new IllegalStateException("Flight " + flight.getCode() + " is fully booked");
         }
 
@@ -50,6 +54,8 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(BookingStatus.CONFIRMED);
 
         Booking saved = bookingRepository.save(booking);
+        log.info("Booking created: bookingId={}, pnr={}, flightId={}, userId={}",
+                saved.getId(), saved.getPnr(), flight.getId(), userId);
         return bookingMapper.toResponse(saved);
     }
 
@@ -72,13 +78,17 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponseDTO cancel(Long id, UUID userId) {
+        log.info("Cancelling booking: bookingId={}, userId={}", id, userId);
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Booking not found with id: " + id));
         if (!booking.getPassengerProfile().getUserId().equals(userId)) {
+            log.warn("Booking cancel denied: bookingId={}, userId={} does not own this booking", id, userId);
             throw new AccessDeniedException("You do not own this booking");
         }
         booking.setStatus(BookingStatus.CANCELLED);
-        return bookingMapper.toResponse(bookingRepository.save(booking));
+        BookingResponseDTO response = bookingMapper.toResponse(bookingRepository.save(booking));
+        log.info("Booking cancelled: bookingId={}, userId={}", id, userId);
+        return response;
     }
 
     private String generatePNR() {
